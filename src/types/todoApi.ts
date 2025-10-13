@@ -63,6 +63,7 @@ export interface AuthResponse {
   refreshToken?: string; // Présent uniquement dans login
 }
 
+// Intercepteur pour ajouter automatiquement le token
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');
@@ -70,5 +71,8 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
 );
