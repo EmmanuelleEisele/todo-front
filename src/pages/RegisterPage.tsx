@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { Flame, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function RegisterPage() {
+  const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
   return (
-    <div className="flex flex-col font-sans items-center justify-center min-h-screen bg-gradient-to-b from-orange-100 to-orange-300">
-      <div className="flex flex-col bg-white py-8 rounded-lg shadow-lg w-fit my-2">
+    <div className="flex flex-col font-sans items-center justify-center min-h-[calc(100vh-132px)] bg-gradient-to-b from-orange-100 to-orange-300">
+      <div className="flex flex-col bg-white py-6 rounded-lg shadow-lg w-fit my-2">
         <div className="flex flex-row justify-center gap-2">
           <Flame className="w-8 h-8 text-orange-600 mb-4" />
           <h2 className="text-2xl font-bold mb-6 text-center text-orange-700">
@@ -45,14 +47,47 @@ export default function RegisterPage() {
               required
             />
           </div>
-          <div className=" mx-4 ">
+          <div className="mx-4">
             <label
               className="block text-orange-700 text-sm font-bold mb-2"
               htmlFor="password"
             >
               Mot de passe{" "}
-              <Info className="inline-block w-4 h-4 text-orange-700" />
+              <Info 
+                className="inline-block w-4 h-4 text-orange-700 cursor-pointer hover:text-orange-900 transition-colors" 
+                onClick={() => setShowPasswordRequirements(!showPasswordRequirements)}
+              />
             </label>
+            
+            {/* Exigences du mot de passe - Affichage conditionnel */}
+            {showPasswordRequirements && (
+              <div className="mb-3 p-3 bg-orange-50 border border-orange-200 rounded-lg text-xs text-orange-800">
+                <p className="font-semibold mb-2">Le mot de passe doit contenir :</p>
+                <ul className="space-y-1">
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-orange-600 rounded-full"></span>
+                    Au moins 8 caractères
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-orange-600 rounded-full"></span>
+                    Une lettre majuscule (A-Z)
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-orange-600 rounded-full"></span>
+                    Une lettre minuscule (a-z)
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-orange-600 rounded-full"></span>
+                    Un chiffre (0-9)
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-orange-600 rounded-full"></span>
+                    Un caractère spécial (!@#$%^&*)
+                  </li>
+                </ul>
+              </div>
+            )}
+
             <input
               className="shadow border-1 border-orange-400 appearance-none rounded-lg w-[14rem] sm:w-[26rem] py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:border-orange-700"
               id="password"
@@ -91,27 +126,19 @@ export default function RegisterPage() {
           <p className="text-orange-700 text-xs mb-4 px-4">
             * Informations requises
           </p>
-          <div className="flex flex-col items-center justify-center mb-4">
+          <div className="flex flex-col items-center justify-center">
             <button
               className="bg-orange-700 border-none w- hover:bg-orange-800 text-white font-bold py-2 px-4 rounded "
               type="button"
             >
               S'inscrire
             </button>
-            <p className="text-orange-700 pt-2"> Pas encore de compte ? </p>
+            <p className="text-orange-700 pt-4"> Vous avez déjà un compte ?</p>
             <Link
               className="no-underline font-bold text-sm text-orange-700 hover:underline cursor-pointer"
-              to="/register"
+              to="/login"
             >
-              Créer un compte
-            </Link>
-          </div>
-          <div className="text-center">
-            <Link
-              className=" font-semibold text-xs text-gray-600 hover:text-orange-800"
-              to="/forgot-password"
-            >
-              Mot de passe oublié ?
+              Connectez-vous
             </Link>
           </div>
         </form>
