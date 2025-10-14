@@ -14,21 +14,21 @@ export default function NavBar() {
   };
 
   return (
-    <header className="container mx-auto py-4 font-sans">
+    <header className="bg-white mx-auto py-4 font-sans w-full">
       <div className="flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 no-underline pl-2">
+        <Link to="/" className="flex items-center gap-2 no-underline sm:pl-4">
           <Flame className="w-8 h-8 text-orange-600" />
           <span className="text-orange-700 font-semibold text-xl">To-Doom</span>
         </Link>
 
         {/* Menu Desktop - Visible uniquement sur écrans larges */}
-        <div className="hidden sm:flex items-center gap-3">
+        <div className="hidden sm:flex items-center gap-3 pr-6">
           {isConnected ? (
             <Link to="/dashboard">
               <Button
                 variant="ghost"
-                className="text-orange-700 font-semibold hover:text-orange-900 hover:bg-orange-200"
+                className="text-orange-700 font-semibold hover:text-orange-900 hover:bg-orange-200 font-sans"
               >
                 Tableau de bord
               </Button>
@@ -38,14 +38,14 @@ export default function NavBar() {
               <Link to="/login">
                 <Button
                   variant="ghost"
-                  className="text-orange-700 font-semibold hover:text-orange-900 hover:bg-orange-200"
+                  className="text-orange-700 font-semibold hover:text-orange-900 hover:bg-orange-200 font-sans"
                 >
                   Connexion
                 </Button>
               </Link>
               <Link to="/register">
                 <Button
-                  className="bg-orange-600 font-semibold hover:bg-orange-700 text-white"
+                  className="bg-orange-600 font-semibold hover:bg-orange-700 text-white font-sans"
                 >
                   Inscription
                 </Button>
@@ -72,7 +72,7 @@ export default function NavBar() {
               <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
                 <Button
                   variant="ghost"
-                  className="w-full text-orange-700 font-semibold hover:text-orange-900 hover:bg-orange-200"
+                  className="w-full text-orange-700 font-semibold hover:text-orange-900 hover:bg-orange-200 font-sans"
                 >
                   Tableau de bord
                 </Button>
@@ -82,14 +82,14 @@ export default function NavBar() {
                 <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                   <Button
                     variant="ghost"
-                    className="w-full text-orange-700 font-semibold hover:text-orange-900 hover:bg-orange-200"
+                    className="w-full text-orange-700 font-semibold hover:text-orange-900 hover:bg-orange-200 font-sans"
                   >
                     Connexion
                   </Button>
                 </Link>
                 <Link to="/register" onClick={() => setIsMenuOpen(false)}>
                   <Button
-                    className="w-full bg-orange-600 font-semibold hover:bg-orange-700 text-white"
+                    className="w-full bg-orange-600 font-semibold hover:bg-orange-700 text-white font-sans"
                   >
                     Inscription
                   </Button>

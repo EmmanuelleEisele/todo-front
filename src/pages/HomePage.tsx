@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 export default function HomePage() {
   return (
-    <div className="font-sans text-center min-h-[calc(100vh-132px)] max-w-6xl sm:mx-auto mx-2 xs:mx-0 py-2 ">
+    <div className="font-sans text-center min-h-[calc(100vh-116px)] max-w-6xl sm:mx-auto mx-2 xs:mx-0 py-2 ">
       <motion.div
         className="div mb-2 mt-4"
         initial={{ y: 15, opacity: 0 }}

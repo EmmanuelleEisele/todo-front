@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 export default function RegisterPage() {
   const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
   return (
-    <div className="flex flex-col font-sans items-center justify-center min-h-[calc(100vh-132px)] bg-gradient-to-b from-orange-100 to-orange-300">
+    <div className="flex flex-col font-sans items-center justify-center min-h-[calc(100vh-116px)] bg-gradient-to-b from-orange-100 to-orange-300">
       <div className="flex flex-col bg-white py-6 rounded-lg shadow-lg w-fit my-2">
         <div className="flex flex-row justify-center gap-2">
           <Flame className="w-8 h-8 text-orange-600 mb-4" />
