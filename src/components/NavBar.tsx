@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { Flame, Menu, X } from 'lucide-react';
+import { Flame, Menu, Power, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Button from './ui/Button';
 
 export default function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const isConnected = false; // Remplacez par la logique réelle de vérification de connexion
+ 
   // Vérification de l'état de connexion via token
-  //const token = localStorage.getItem('authToken');
-  //const isConnected = !!token;
+  const token = localStorage.getItem('authToken');
+  const isConnected = !!token;
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
@@ -25,14 +25,24 @@ export default function NavBar() {
         {/* Menu Desktop - Visible uniquement sur écrans larges */}
         <div className="hidden sm:flex items-center gap-3 pr-6">
           {isConnected ? (
+            <>
             <Link to="/dashboard">
               <Button
                 variant="ghost"
                 className="text-orange-700 font-semibold hover:text-orange-900 hover:bg-orange-200 font-sans"
+                title='Aller au tableau de bord'
               >
                 Tableau de bord
               </Button>
             </Link>
+              <Button
+                variant="ghost"
+                className="text-orange-700 font-semibold hover:text-orange-900 hover:bg-orange-200 font-sans"
+                title='Se déconnecter'
+              >
+                <Power />
+              </Button>
+            </>
           ) : (
             <>
               <Link to="/login">
@@ -69,6 +79,7 @@ export default function NavBar() {
         <div className="sm:hidden mt-4 py-4 px-2 border-t border-orange-200">
           <div className="flex flex-col gap-3">
             {isConnected ? (
+              <>
               <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
                 <Button
                   variant="ghost"
@@ -77,6 +88,14 @@ export default function NavBar() {
                   Tableau de bord
                 </Button>
               </Link>
+              <Button 
+                variant="ghost"
+                className="w-full text-orange-700 font-semiboldfont-sans"
+                title='Se déconnecter'
+              >
+                Se déconnecter
+              </Button>
+              </>
             ) : (
               <>
                 <Link to="/login" onClick={() => setIsMenuOpen(false)}>

@@ -38,7 +38,15 @@ export const authService = {
     localStorage.removeItem('authToken');
     localStorage.removeItem('currentUser');
   },
-
+  setRefreshToken: (refreshToken: string) => {
+    localStorage.setItem('refreshToken', refreshToken);
+  },
+  getRefreshToken: (): string | null => {
+    return localStorage.getItem('refreshToken');
+  },
+  removeRefreshToken: () => {
+    localStorage.removeItem('refreshToken');
+  },
     // Vérifier si l'utilisateur est authentifié
    isAuthenticated: (): boolean => {
     const token = localStorage.getItem('authToken');

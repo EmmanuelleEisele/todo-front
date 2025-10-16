@@ -1,9 +1,61 @@
 import { useState } from "react";
 import { Flame, Info } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { authService } from "../services/authService";
 
 export default function RegisterPage() {
+  const navigate = useNavigate();
   const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
+  
+  // États pour le formulaire
+  const [pseudo, setPseudo] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Fonction de soumission du formulaire
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    // Vérifications côté client
+    if (!pseudo || !email || !password || !confirmPassword) {
+      setError("Veuillez remplir tous les champs");
+      setLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Les mots de passe ne correspondent pas");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      await authService.register({ pseudo, email, password });
+      navigate("/"); 
+
+    } catch (err: unknown) {
+      if (
+        typeof err === "object" &&
+        err !== null &&
+        "response" in err &&
+        typeof (err as { response?: { data?: { message?: string } } }).response === "object"
+      ) {
+        setError(
+          (err as { response?: { data?: { message?: string } } }).response?.data?.message ||
+            "Erreur lors de l'inscription"
+        );
+      } else {
+        setError("Erreur lors de l'inscription");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="flex flex-col font-sans items-center justify-center min-h-[calc(100vh-116px)] bg-gradient-to-b from-orange-100 to-orange-300">
       <div className="flex flex-col bg-white py-6 rounded-lg shadow-lg w-fit my-2">
@@ -13,10 +65,15 @@ export default function RegisterPage() {
             Inscription
           </h2>
         </div>
-        <form>
+        <form onSubmit={handleSubmit}>
+          {error && (
+            <div className="mx-4 mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              {error}
+            </div>
+          )}
           <div className="mb-4 mx-4">
             <label
-              htmlFor="firstName"
+              htmlFor="pseudo"
               className="block text-orange-700 text-sm font-bold mb-2"
             >
               Pseudo{" "}
@@ -24,9 +81,11 @@ export default function RegisterPage() {
             </label>
             <input
               className="shadow border-1 border-orange-400 appearance-none rounded-lg w-[14rem] sm:w-[26rem] py-2 px-3 text-gray-700 leading-tight focus:border-orange-700 focus:outline-none"
-              id="firstName"
+              id="pseudo"
               type="text"
               placeholder="Pseudo"
+              value={pseudo}
+              onChange={(e) => setPseudo(e.target.value)}
               required
             />
           </div>
@@ -44,6 +103,8 @@ export default function RegisterPage() {
               id="email"
               type="email"
               placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
@@ -93,6 +154,8 @@ export default function RegisterPage() {
               id="password"
               type="password"
               placeholder="******************"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
@@ -109,6 +172,8 @@ export default function RegisterPage() {
               id="confirm-password"
               type="password"
               placeholder="******************"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               required
             />
           </div>
@@ -129,9 +194,9 @@ export default function RegisterPage() {
           <div className="flex flex-col items-center justify-center">
             <button
               className="bg-orange-700 border-none w- hover:bg-orange-800 text-white font-bold py-2 px-4 rounded "
-              type="button"
+              type="submit"
             >
-              S'inscrire
+              {loading ? "Création du compte..." : "Je m'inscris"}
             </button>
             <p className="text-orange-700 pt-4"> Vous avez déjà un compte ?</p>
             <Link

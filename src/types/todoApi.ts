@@ -7,6 +7,51 @@ const apiClient = axios.create({
   },
 });
 
+// Intercepteur pour ajouter automatiquement le token JWT
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Intercepteur pour gérer les erreurs 401 (token expiré)
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (refreshToken) {
+        try {
+          const refreshResponse = await apiClient.post('/auth/refresh', { refreshToken });
+          const newToken = refreshResponse.data.token;
+          localStorage.setItem('authToken', newToken);
+          error.config.headers.Authorization = `Bearer ${newToken}`;
+          // Rejoue la requête initiale avec le nouveau token
+          return apiClient.request(error.config);
+        } catch {
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('currentUser');
+          window.location.href = '/login';
+        }
+      } else {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('currentUser');
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default apiClient;
 export interface Task {
   id: string;  // MongoDB _id
@@ -34,19 +79,16 @@ export interface DeleteTask {
 }
 export interface User {
   id: string;  // MongoDB _id est un string
-  firstname: string;
-  lastname: string;
+  pseudo: string;
   email: string;
 }
 export interface RegisterRequest {
-  firstname: string;
-  lastname: string;
+  pseudo: string;
   email: string;
   password: string;
 }
 export interface RegisterForm {
-  firstname: string;
-  lastname: string;
+  pseudo: string;
   email: string;
   password: string;
   confirmPassword: string;
