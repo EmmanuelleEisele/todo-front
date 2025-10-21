@@ -2,8 +2,13 @@ import { useState } from "react";
 import { Flame } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
+import type { User } from "../types/todoApi";
 
-export default function LoginPage() {
+interface LoginPageProps {
+  onLogin: (userData: User, token: string, refreshToken?: string) => void;
+}
+
+export default function LoginPage({ onLogin }: LoginPageProps) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,9 +26,11 @@ export default function LoginPage() {
     }
 
     try {
-      await authService.login({ email, password });
+      const response = await authService.login({ email, password });
+      // Appelle la prop onLogin pour mettre à jour l'état d'App.tsx
+      onLogin(response.user, response.token, response.refreshToken);
       // Redirection vers la page d'accueil après connexion réussie
-      navigate("/");
+      navigate("/dashboard");
     } catch (error: unknown) {
       let errorMessage = "Email ou mot de passe incorrect";
 

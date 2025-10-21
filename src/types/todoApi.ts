@@ -79,7 +79,7 @@ export interface DeleteTask {
 }
 export interface User {
   id: string;  // MongoDB _id est un string
-  pseudo: string;
+  pseudo?: string;  // Optionnel car l'API ne le retourne pas toujours
   email: string;
 }
 export interface RegisterRequest {

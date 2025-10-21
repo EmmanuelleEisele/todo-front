@@ -1,16 +1,26 @@
 import { useState } from 'react';
 import { Flame, Menu, Power, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Button from './ui/Button';
+import type { User } from '../types/todoApi';
 
-export default function NavBar() {
+interface NavBarProps {
+  isAuthenticated: boolean;
+  user?: User | null;
+  onLogout: () => void;
+}
+
+export default function NavBar({  isAuthenticated, onLogout }: NavBarProps) {
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
- 
-  // Vérification de l'état de connexion via token
-  const token = localStorage.getItem('authToken');
-  const isConnected = !!token;
+  
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleLogout = () => {
+    onLogout();
+    navigate("/");
   };
 
   return (
@@ -24,7 +34,7 @@ export default function NavBar() {
 
         {/* Menu Desktop - Visible uniquement sur écrans larges */}
         <div className="hidden sm:flex items-center gap-3 pr-6">
-          {isConnected ? (
+          {isAuthenticated ? (
             <>
             <Link to="/dashboard">
               <Button
@@ -39,6 +49,7 @@ export default function NavBar() {
                 variant="ghost"
                 className="text-orange-700 font-semibold hover:text-orange-900 hover:bg-orange-200 font-sans"
                 title='Se déconnecter'
+                onClick={handleLogout}
               >
                 <Power />
               </Button>
@@ -78,7 +89,7 @@ export default function NavBar() {
       {isMenuOpen && (
         <div className="sm:hidden mt-4 py-4 px-2 border-t border-orange-200">
           <div className="flex flex-col gap-3">
-            {isConnected ? (
+            {isAuthenticated ? (
               <>
               <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
                 <Button
@@ -90,8 +101,12 @@ export default function NavBar() {
               </Link>
               <Button 
                 variant="ghost"
-                className="w-full text-orange-700 font-semiboldfont-sans"
+                className="w-full text-orange-700 font-semibold font-sans"
                 title='Se déconnecter'
+                onClick={() => {
+                  handleLogout();
+                  setIsMenuOpen(false);
+                }}
               >
                 Se déconnecter
               </Button>

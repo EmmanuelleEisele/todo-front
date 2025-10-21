@@ -2,8 +2,13 @@ import { useState } from "react";
 import { Flame, Info } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
+import type { User } from "../types/todoApi";
 
-export default function RegisterPage() {
+interface RegisterPageProps {
+  onLogin: (userData: User, token: string, refreshToken?: string) => void;
+}
+
+export default function RegisterPage({ onLogin }: RegisterPageProps) {
   const navigate = useNavigate();
   const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
   
@@ -35,8 +40,12 @@ export default function RegisterPage() {
     }
 
     try {
-      await authService.register({ pseudo, email, password });
-      navigate("/"); 
+      const response = await authService.register({ pseudo, email, password });
+      // Stocker le pseudo localement puisque l'API ne le retourne pas au login
+      localStorage.setItem('userPseudo', pseudo);
+      // Appelle la prop onLogin pour mettre à jour l'état d'App.tsx
+      onLogin(response.user, response.token, response.refreshToken);
+      navigate("/dashboard");
 
     } catch (err: unknown) {
       if (
