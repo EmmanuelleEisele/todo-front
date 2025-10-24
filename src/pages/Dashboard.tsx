@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import Button from "../components/ui/Button";
 import { CheckCircle2, Clock, Flame, ListTodo, TrendingUp } from "lucide-react";
 import type { User } from "../types/todoApi";
+import ChartComponent from "../components/chart";
 
 export default function Dashboard({ user }: { user?: User | null }) {
   if (!user) {
@@ -45,27 +46,30 @@ export default function Dashboard({ user }: { user?: User | null }) {
         <h2 className="text-xl font-semibold mb-4 text-orange-700">
           Vos statistiques
         </h2>
-        <section className="mt-8 flex flex-col sm:flex-row gap-6 justify-center ">
+        <section id="cards" className="mt-8 flex flex-col sm:flex-row gap-6 justify-center ">
           <div className=" w-auto sm:w-1/4 bg-white border-2 border-orange-300 rounded-2xl p-6 flex flex-col items-center sm:items-start gap-2 sm:gap-6">
             <h1 className="flex gap-2 text-orange-800 font-bold"><ListTodo size={18} />Total</h1>
-            <p className="text-xl font-bold text-orange-700">15</p>
+            <p className="text-2xl font-bold text-orange-700">15</p>
             <p className="text-orange-700">Tâches</p>
           </div>
           <div className="w-auto sm:w-1/4 bg-white border-2 border-orange-300 rounded-2xl p-6 flex flex-col items-center sm:items-start gap-2 sm:gap-6">
             <h1 className="flex gap-2 text-orange-800 font-bold"><Clock size={18} />En cours</h1>
-            <p className="text-xl font-bold text-orange-700">7</p>
+            <p className="text-2xl font-bold text-orange-700">7</p>
             <p className="text-orange-700">Tâches en cours</p>
           </div>
           <div className="w-auto sm:w-1/4 bg-white border-2 border-orange-300 rounded-2xl p-6 flex flex-col items-center sm:items-start gap-2 sm:gap-6">
             <h1 className="flex gap-2 text-orange-800 font-bold"><CheckCircle2 size={18} />Terminées</h1>
-            <p className="text-xl font-bold text-orange-700">8</p>
+            <p className="text-2xl font-bold text-orange-700">8</p>
             <p className="text-orange-700">Tâches complétées</p>
           </div>
           <div className="w-auto sm:w-1/4 bg-white border-2 border-orange-300 rounded-2xl p-6 flex flex-col items-center sm:items-start gap-2 sm:gap-6">
             <h1 className="flex gap-2 text-orange-800 font-bold"><TrendingUp size={18} />Taux</h1>
-            <p className="text-xl font-bold text-orange-700">75%</p>
+            <p className="text-2xl font-bold text-orange-700">75%</p>
             <p className="text-orange-700">de réalisation</p>
           </div>
+        </section>
+        <section id="stats" className="mt-8 font-sans">
+          <ChartComponent />
         </section>
       </section>
     </div>

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Flame } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { authService } from "../services/authService";
 import type { User } from "../types/todoApi";
+import  apiClient  from "../types/todoApi";
 
 interface LoginPageProps {
   onLogin: (userData: User, token: string, refreshToken?: string) => void;
@@ -26,9 +26,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     }
 
     try {
-      const response = await authService.login({ email, password });
+      const response = await apiClient.post("/auth/login", { email, password });
+      localStorage.setItem("refreshToken", response.data.refreshToken);
       // Appelle la prop onLogin pour mettre à jour l'état d'App.tsx
-      onLogin(response.user, response.token, response.refreshToken);
+      onLogin(response.data.user, response.data.token, response.data.refreshToken);
       // Redirection vers la page d'accueil après connexion réussie
       navigate("/dashboard");
     } catch (error: unknown) {
