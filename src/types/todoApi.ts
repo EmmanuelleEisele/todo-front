@@ -116,7 +116,6 @@ export interface AuthResponse {
 export interface Category {
   _id: string;
   name: "work" | "personal" | "shopping" | "health" | "finance" | "others";
-  color: string;
 }
 // Intercepteur pour ajouter automatiquement le token
 apiClient.interceptors.request.use(

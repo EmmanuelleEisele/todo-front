@@ -1,45 +1,28 @@
 import { useEffect, useState } from "react";
-import type { Category, Task } from "../types/todoApi";
+import type { Task } from "../types/todoApi";
 import apiClient from "../types/todoApi";
+import CategorySelect from "../components/CategorySelect";
+import TaskList from "../components/TaskList";
+import {
+  categoryLabels,
+  priorityLabels,
+  periodLabels,
+} from "../constants/labels";
 import Button from "../components/ui/Button";
-import { PlusIcon } from "lucide-react";
+import { Flame, PlusIcon } from "lucide-react";
 
 export default function TasksPage() {
+  const [filterCategory, setFilterCategory] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<string>("");
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState<Partial<Task>>({});
-
-  // Traduction des statuts
-  const statusLabels: Record<string, string> = {
-    todo: "En cours",
-    done: "Validée",
-    cancelled: "Annulée",
-    overdue: "En retard",
-  };
-
-  // Traduction des priorités
-  const priorityLabels: Record<string, string> = {
-    low: "Basse",
-    medium: "Moyenne",
-    high: "Haute",
-  };
-
-  // Traduction des périodes
-  const periodLabels: Record<string, string> = {
-    Day: "Jour",
-    Week: "Semaine",
-    Month: "Mois",
-    Year: "Année",
-  };
+  const [categories, setCategories] = useState<
+    Array<{ _id: string; name: string; label: string; icon: string }>
+  >([]);
 
   async function getAllTasks() {
     const response = await apiClient.get("/tasks/");
     return response.data.data; // tableau de tâches
-  }
-
-  async function getAllCategories() {
-    const response = await apiClient.get("/categories/");
-    return response.data.data || response.data; // tableau de catégories
   }
 
   async function deleteTask(id: string) {
@@ -55,27 +38,51 @@ export default function TasksPage() {
   }
   useEffect(() => {
     getAllTasks().then(setTasks);
-    getAllCategories()
-      .then(setCategories)
-      .catch((error) => {
-        console.error("Erreur lors du chargement des catégories :", error);
-        setCategories([]); // Catégories vides par défaut
-      });
+    // Récupère les catégories dynamiquement
+    apiClient
+      .get("/categories/")
+      .then((res) => {
+        console.log(
+          "Réponse brute catégories backend:",
+          res.data.data || res.data
+        );
+        const cats = (res.data.data || res.data).map(
+          (cat: { _id: string; name: string }) => {
+            const fusion = {
+              _id: cat._id,
+              name: cat.name,
+              label: categoryLabels[cat.name]?.label || cat.name,
+              icon: categoryLabels[cat.name]?.icon || "❓",
+            };
+            console.log("Fusion catégorie:", fusion);
+            return fusion;
+          }
+        );
+        setCategories(cats);
+        console.log("Liste finale des catégories:", cats);
+      })
+      .catch(() => setCategories([]));
   }, []);
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    if (name === "task-filtre") {
+      console.log("Changement filtre catégorie:", value);
+      setFilterCategory(value);
+    } else {
+      setFormData((prev) => {
+        const newForm = { ...prev, [name]: value };
+        console.log("Changement formData:", newForm);
+        return newForm;
+      });
+    }
   }
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!formData.title || !formData.period) {
-      alert("Le titre et la période sont obligatoires");
+    if (!formData.title || !formData.period || !formData.categoryId) {
+      alert("Le titre, la période et la catégorie sont obligatoires");
       return;
     }
     try {
@@ -111,13 +118,12 @@ export default function TasksPage() {
     if (!task) return;
 
     try {
-      const response = await apiClient.put(`/tasks/${id}`, {
+      await apiClient.put(`/tasks/${id}`, {
         isDone: !task.isDone,
       });
-
-      setTasks((prevTasks) =>
-        prevTasks.map((t) => (t._id === id ? response.data.data : t))
-      );
+      // Recharge la liste complète pour synchroniser les catégories
+      const tasksUpdated = await getAllTasks();
+      setTasks(tasksUpdated);
     } catch (error) {
       console.error("Erreur lors de la mise à jour de la tâche :", error);
       alert("Erreur lors de la mise à jour de la tâche");
@@ -128,32 +134,32 @@ export default function TasksPage() {
       <h1 className="text-3xl font-bold text-orange-700 font-sans p-4 mt-8">
         Mes Tâches
       </h1>
+
+      {/* Formulaire de création de tâche */}
       <form
         id="task-form"
         action="submit"
         onSubmit={handleCreate}
-        className="flex flex-col w-1/2 mx-auto gap-2 font-sans"
+        className="flex flex-col w-fit sm:w-1/2 mx-auto gap-2 font-sans bg-white border-2 border-orange-300 rounded-2xl p-4 mb-8"
       >
-        <div  className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-1">
+          <span className="text-orange-800">*</span>
           <label htmlFor="task-categories">
-            <select
+            <CategorySelect
               name="categoryId"
-              id="task-categories"
-              className="bg-white border-2 p-2 border-orange-300 rounded-lg font-sans"
-              onChange={handleChange}
+              categories={categories.map((cat) => ({
+                key: cat._id,
+                label: cat.label,
+                icon: cat.icon,
+              }))}
               value={formData.categoryId || ""}
-            >
-              <option value="" className="">
-                Categorie
-              </option>
-              {categories.map((category) => (
-                <option key={category._id} value={category._id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
+              onChange={handleChange}
+              className="bg-white border-2 p-2 border-orange-300 rounded-lg font-sans"
+              required
+            />
           </label>
           <label htmlFor="task-period" />
+          <span className="text-orange-800">*</span>
           <select
             id="task-period"
             name="period"
@@ -169,6 +175,7 @@ export default function TasksPage() {
               </option>
             ))}
           </select>
+
           <label htmlFor="task-deadline" />
           <input
             type="date"
@@ -178,25 +185,27 @@ export default function TasksPage() {
             onChange={handleChange}
             value={formData.deadline || ""}
           />
-        <label htmlFor="priority" />
-        <select
-          id="priority"
-          name="priority"
-          required
-          value={formData.priority}
-          onChange={handleChange}
-          className="bg-white border-2 border-orange-300 rounded-xl p-2 focus:outline-none w-fit"
-        >
-          <option value="">Priorité</option>
-          {["low", "medium", "high"].map((level) => (
-            <option key={level} value={level}>
-              {priorityLabels[level]}
-            </option>
-          ))}
-        </select>
+          <label htmlFor="priority" />
+          <span className="text-orange-800">*</span>
+          <select
+            id="priority"
+            name="priority"
+            required
+            value={formData.priority}
+            onChange={handleChange}
+            className="bg-white border-2 border-orange-300 rounded-xl p-2 focus:outline-none w-fit"
+          >
+            <option value="">Priorité</option>
+            {["low", "medium", "high"].map((level) => (
+              <option key={level} value={level}>
+                {priorityLabels[level]}
+              </option>
+            ))}
+          </select>
         </div>
 
         <label htmlFor="task-title" />
+         
         <input
           type="text"
           id="task-title"
@@ -204,7 +213,7 @@ export default function TasksPage() {
           onChange={handleChange}
           value={formData.title || ""}
           className=" bg-white border-2 border-orange-300 rounded-xl p-2 placeholder:text-orange-600 focus:outline-none"
-          placeholder="Ajouter une tâche avant la fin du monde..."
+          placeholder="* Ajouter le titre de votre tâche avant la fin du monde..."
           required
         />
         <Button
@@ -213,32 +222,98 @@ export default function TasksPage() {
         >
           <PlusIcon size={15} /> Ajouter
         </Button>
+        <span className="text-orange-800 text-[0.7rem]">* Ces champs sont obligatoires</span>
       </form>
-
-      <p className="mx-auto text-center mt-4">Liste des tâches :</p>
-      <ul className="mx-auto max-w-4xl">
-        {tasks.map((task, index) => (
-          <li
-            key={task._id || `task-${index}`}
-            className="bg-white border-2 border-orange-300 rounded-2xl p-4 mb-2"
+      {/*Filtres des tâches */}
+      <div className="flex flex-col items-center justify-center gap-4 mb-6 sm:flex-row">
+        {/* Filtre des tâches par catégories */}
+        <div>
+          <label
+            htmlFor="task-filtre"
+            className="block mb-2 text-orange-700 font-sans"
           >
-            <p>
-              {task.title} - {statusLabels[task.status]} -{" "}
-              {task.deadline
-                ? new Date(task.deadline).toLocaleDateString("fr-FR")
-                : ""}
-            </p>
-            <input
-              type="checkbox"
-              onChange={() => toggleTaskCompletion(task._id)}
-              className="mr-2"
-              checked={task.isDone}
-            />
+            Filtrer par catégorie :
+          </label>
+          <select
+            name="task-filtre"
+            id="task-filtre"
+            value={filterCategory}
+            onChange={handleChange}
+            className="font-sans bg-white border-2 border-orange-300 rounded-xl p-2 placeholder:text-orange-600 focus:outline-none"
+          >
+            <option value="">Toutes les catégories</option>
+            {categories.map((cat) => (
+              <option key={cat._id} value={cat._id}>
+                {cat.icon} {cat.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        {/*Filtre des tâches par statuts */}
+        <div>
+          {(() => {
+            const statusLabels: Record<string, string> = {
+              todo: "À faire",
+              done: "Validée",
+              cancelled: "Annulée",
+              overdue: "En retard",
+            };
+            const uniqueStatus = Array.from(
+              new Set(tasks.map((t) => t.status))
+            );
+            return (
+              <div>
+                <label
+                  htmlFor="task-status-filtre"
+                  className="block mb-2 text-orange-700 font-sans"
+                >
+                  Filtrer par statut :
+                </label>
+                <select
+                  name="task-status-filtre"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="font-sans bg-white border-2 border-orange-300 rounded-xl p-2 placeholder:text-orange-600 focus:outline-none"
+                >
+                  <option value="">Tous les statuts</option>
+                  {uniqueStatus.map((status) => (
+                    <option key={status} value={status}>
+                      {statusLabels[status] || status}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          })()}
+        </div>
+      </div>
 
-            <button onClick={() => deleteTask(task._id)}>Supprimer</button>
-          </li>
-        ))}
-      </ul>
+      {/* Liste des tâches ou message si aucune */}
+      {(() => {
+        const filteredTasks = tasks.filter((t) => {
+          const catId =
+            typeof t.categoryId === "object" && t.categoryId !== null
+              ? (t.categoryId as any)._id
+              : t.categoryId;
+          const catMatch = !filterCategory || catId === filterCategory;
+          const statusMatch = !filterStatus || t.status === filterStatus;
+          return catMatch && statusMatch;
+        });
+        return filteredTasks.length === 0 ? (
+          <div className="flex flex-col items-center font-sans text-orange-600 my-8">
+            <Flame size={30} /> Aucune tâche. Profitez de la fin du monde ! 🎉
+          </div>
+        ) : (
+          <ul className="mx-auto max-w-2xl font-sans">
+            <TaskList
+              tasks={filteredTasks}
+              categories={categories}
+              onToggle={toggleTaskCompletion}
+              onDelete={deleteTask}
+            />
+          </ul>
+        );
+      })()}
     </div>
   );
 }
