@@ -22,7 +22,7 @@ export default function CategorySelect({
   name,
   onChange,
   className = "",
-  placeholder = "Catégorie",
+  placeholder = "Catégorie *",
   required = true,
 }: CategorySelectProps) {
   return (

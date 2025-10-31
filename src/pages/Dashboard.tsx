@@ -1,10 +1,35 @@
 import { Link } from "react-router-dom";
 import Button from "../components/ui/Button";
 import { CheckCircle2, Clock, Flame, ListTodo, TrendingUp } from "lucide-react";
-import type { User } from "../types/todoApi";
+import type { Task, User } from "../types/todoApi";
 import ChartComponent from "../components/chart";
+import { useState } from "react";
+import { useEffect } from "react";
+import apiClient from "../types/todoApi";
 
 export default function Dashboard({ user }: { user?: User | null }) {
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  useEffect(() => {
+    async function fetchTasks() {
+      if (!user) return;
+      try {
+        const response = await apiClient.get(`/tasks`);
+        if (response && response.data && Array.isArray(response.data.data)) {
+          setTasks(response.data.data);
+        } else if (Array.isArray(response.data)) {
+          setTasks(response.data);
+        } else {
+          setTasks([]);
+        }
+      } catch (error) {
+        // Gérer l'erreur selon vos besoins
+        console.error("Erreur lors de la récupération des tâches :", error);
+      }
+    }
+    fetchTasks();
+  }, [user]);
+
   if (!user) {
     return (
       <div className="flex flex-col font-sans items-center justify-center min-h-[calc(100vh-116px)]">
@@ -49,17 +74,17 @@ export default function Dashboard({ user }: { user?: User | null }) {
         <section id="cards" className="mt-8 flex flex-col sm:flex-row gap-6 justify-center ">
           <div className=" w-auto sm:w-1/4 bg-white border-2 border-orange-300 rounded-2xl p-6 flex flex-col items-center sm:items-start gap-2 sm:gap-6">
             <h1 className="flex gap-2 text-orange-800 font-bold"><ListTodo size={18} />Total</h1>
-            <p className="text-2xl font-bold text-orange-700">15</p>
+            <p className="text-2xl font-bold text-orange-700">{tasks.length}</p>
             <p className="text-orange-700">Tâches</p>
           </div>
           <div className="w-auto sm:w-1/4 bg-white border-2 border-orange-300 rounded-2xl p-6 flex flex-col items-center sm:items-start gap-2 sm:gap-6">
             <h1 className="flex gap-2 text-orange-800 font-bold"><Clock size={18} />En cours</h1>
-            <p className="text-2xl font-bold text-orange-700">7</p>
+            <p className="text-2xl font-bold text-orange-700">{tasks.filter(t => t.status !== 'done').length}</p>
             <p className="text-orange-700">Tâches en cours</p>
           </div>
           <div className="w-auto sm:w-1/4 bg-white border-2 border-orange-300 rounded-2xl p-6 flex flex-col items-center sm:items-start gap-2 sm:gap-6">
             <h1 className="flex gap-2 text-orange-800 font-bold"><CheckCircle2 size={18} />Terminées</h1>
-            <p className="text-2xl font-bold text-orange-700">8</p>
+            <p className="text-2xl font-bold text-orange-700">{tasks.filter(t => t.status === 'done').length}</p>
             <p className="text-orange-700">Tâches complétées</p>
           </div>
           <div className="w-auto sm:w-1/4 bg-white border-2 border-orange-300 rounded-2xl p-6 flex flex-col items-center sm:items-start gap-2 sm:gap-6">

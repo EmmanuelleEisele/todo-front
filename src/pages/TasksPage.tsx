@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Task } from "../types/todoApi";
+
 import apiClient from "../types/todoApi";
 import CategorySelect from "../components/CategorySelect";
 import TaskList from "../components/TaskList";
@@ -9,13 +10,20 @@ import {
   periodLabels,
 } from "../constants/labels";
 import Button from "../components/ui/Button";
-import { Flame, PlusIcon } from "lucide-react";
+import { Bubbles, Flame, PlusIcon } from "lucide-react";
+
+// Étend Task pour le formulaire avec deadlineDate et deadlineTime
+type FormTask = Partial<Task> & {
+  deadlineDate?: string;
+  deadlineTime?: string;
+};
 
 export default function TasksPage() {
   const [filterCategory, setFilterCategory] = useState<string>("");
   const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterPeriod, setFilterPeriod] = useState<string>("");
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [formData, setFormData] = useState<Partial<Task>>({});
+  const [formData, setFormData] = useState<FormTask>({});
   const [categories, setCategories] = useState<
     Array<{ _id: string; name: string; label: string; icon: string }>
   >([]);
@@ -69,12 +77,12 @@ export default function TasksPage() {
   ) {
     const { name, value } = e.target;
     if (name === "task-filtre") {
-      console.log("Changement filtre catégorie:", value);
       setFilterCategory(value);
+    } else if (name === "task-period-filtre") {
+      setFilterPeriod(value);
     } else {
       setFormData((prev) => {
         const newForm = { ...prev, [name]: value };
-        console.log("Changement formData:", newForm);
         return newForm;
       });
     }
@@ -86,11 +94,25 @@ export default function TasksPage() {
       return;
     }
     try {
-      const response = await apiClient.post("/tasks", formData);
+    // Fusionner date + heure en deadline ISO
+    let deadline = undefined;
+    if (formData.deadlineDate) {
+      if (formData.deadlineTime) {
+        deadline = new Date(
+          `${formData.deadlineDate}T${formData.deadlineTime}`
+        ).toISOString();
+      } else {
+        deadline = new Date(`${formData.deadlineDate}T23:59`).toISOString();
+      }
+    }
+    // On retire deadlineDate et deadlineTime du payload envoyé à l'API
+    const restFormData = { ...(formData as Record<string, any>) };
+    delete restFormData.deadlineDate;
+    delete restFormData.deadlineTime;
+
+    const response = await apiClient.post("/tasks", { ...restFormData, deadline });
       console.log("Réponse de la création de tâche :", response.data);
-      // Réinitialiser le formulaire
       setFormData({});
-      // Recharger la liste des tâches
       const tasks = await getAllTasks();
       setTasks(tasks);
     } catch (error) {
@@ -100,7 +122,6 @@ export default function TasksPage() {
 
       if (hasResponse) {
         const responseData = (err.response as Record<string, unknown>).data;
-        console.error("Erreur backend :", responseData);
         const message =
           typeof responseData === "object" && responseData !== null
             ? (responseData as Record<string, unknown>).message ||
@@ -131,7 +152,7 @@ export default function TasksPage() {
   }
   return (
     <div>
-      <h1 className="text-3xl font-bold text-orange-700 font-sans p-4 mt-8">
+      <h1 className="text-3xl font-bold text-center text-orange-700 font-sans p-4 mt-8">
         Mes Tâches
       </h1>
 
@@ -140,10 +161,12 @@ export default function TasksPage() {
         id="task-form"
         action="submit"
         onSubmit={handleCreate}
-        className="flex flex-col w-fit sm:w-1/2 mx-auto gap-2 font-sans bg-white border-2 border-orange-300 rounded-2xl p-4 mb-8"
+        className="grid grid-cols-1 max-w-3xl mx-2 sm:mx-auto gap-2 font-sans bg-white border-2 border-orange-300 rounded-2xl p-4 mb-8"
       >
-        <div className="flex flex-col sm:flex-row gap-1">
-          <span className="text-orange-800">*</span>
+        <div>
+          <h2 className="mb-4 text-orange-700 font-semibold">
+            Créer une nouvelle tâche
+          </h2>
           <label htmlFor="task-categories">
             <CategorySelect
               name="categoryId"
@@ -154,39 +177,45 @@ export default function TasksPage() {
               }))}
               value={formData.categoryId || ""}
               onChange={handleChange}
-              className="bg-white border-2 p-2 border-orange-300 rounded-lg font-sans"
+              className="bg-white border-2 p-2 border-orange-300 rounded-lg font-sans mr-2 mb-2 md:mb-0"
               required
             />
           </label>
           <label htmlFor="task-period" />
-          <span className="text-orange-800">*</span>
           <select
             id="task-period"
             name="period"
             required
             value={formData.period || ""}
             onChange={handleChange}
-            className="bg-white border-2 p-2 border-orange-300 rounded-lg font-sans w-fit"
+            className="bg-white border-2 p-2 border-orange-300 rounded-lg font-sans w-fit mr-2 mb-2 md:mb-0"
           >
-            <option value="">Période</option>
+            <option value="">Période *</option>
             {Object.entries(periodLabels).map(([key, label]) => (
               <option key={key} value={key.toLowerCase()}>
                 {label}
               </option>
             ))}
           </select>
-
-          <label htmlFor="task-deadline" />
+          <label htmlFor="task-deadline-date" />
           <input
             type="date"
-            id="task-deadline"
-            name="deadline"
-            className=" bg-white border-2 border-orange-300 rounded-lg p-2 font-sans w-fit focus:outline-none focus:ring-2 focus:ring-orange-600/50"
+            id="task-deadline-date"
+            name="deadlineDate"
+            className="bg-white border-2 p-2 border-orange-300 rounded-lg font-sans w-fit mr-2 mb-2 md:mb-0"
             onChange={handleChange}
-            value={formData.deadline || ""}
+            value={formData.deadlineDate || ""}
+          />
+          <label htmlFor="task-deadline-time" />
+          <input
+            type="time"
+            id="task-deadline-time"
+            name="deadlineTime"
+            className="bg-white border-2 p-2 border-orange-300 rounded-lg font-sans w-fit mr-2 mb-2 md:mb-0"
+            onChange={handleChange}
+            value={formData.deadlineTime || ""}
           />
           <label htmlFor="priority" />
-          <span className="text-orange-800">*</span>
           <select
             id="priority"
             name="priority"
@@ -195,7 +224,7 @@ export default function TasksPage() {
             onChange={handleChange}
             className="bg-white border-2 border-orange-300 rounded-xl p-2 focus:outline-none w-fit"
           >
-            <option value="">Priorité</option>
+            <option value="">Priorité *</option>
             {["low", "medium", "high"].map((level) => (
               <option key={level} value={level}>
                 {priorityLabels[level]}
@@ -205,35 +234,39 @@ export default function TasksPage() {
         </div>
 
         <label htmlFor="task-title" />
-         
+
         <input
           type="text"
           id="task-title"
           name="title"
           onChange={handleChange}
           value={formData.title || ""}
+          maxLength={100}
           className=" bg-white border-2 border-orange-300 rounded-xl p-2 placeholder:text-orange-600 focus:outline-none"
           placeholder="* Ajouter le titre de votre tâche avant la fin du monde..."
           required
         />
-        <Button
-          type="submit"
-          className="flex gap-2 items-center justify-center w-fit"
-        >
-          <PlusIcon size={15} /> Ajouter
-        </Button>
-        <span className="text-orange-800 text-[0.7rem]">* Ces champs sont obligatoires</span>
+        <div className="text-xs text-right text-gray-500">
+          {(formData.title ? formData.title.length : 0)} / 100 caractères
+          <Button
+            type="submit"
+            className="flex gap-2 items-center justify-center w-fit"
+          >
+            <PlusIcon size={15} /> Ajouter
+          </Button>
+        </div>
+        <span className="text-orange-800 text-[0.7rem]">
+          * Ces champs sont obligatoires
+        </span>
       </form>
       {/*Filtres des tâches */}
-      <div className="flex flex-col items-center justify-center gap-4 mb-6 sm:flex-row">
+      <div className="max-w-[calc(100%-1rem)] sm:max-w-fit mx-2 sm:mx-auto mb-6 bg-orange-100 border-2 border-orange-200 hover:border-orange-300 rounded-lg p-2">
+        <h2 className="block ml-1 mb-2 text-orange-800 font-sans w-fit font-semibold ">
+          <Bubbles size={15} className="animate-spin" /> Filtres
+        </h2>
         {/* Filtre des tâches par catégories */}
-        <div>
-          <label
-            htmlFor="task-filtre"
-            className="block mb-2 text-orange-700 font-sans"
-          >
-            Filtrer par catégorie :
-          </label>
+        <div className="flex flex-col mx-2 sm:flex-row gap-2">
+          <label htmlFor="task-filtre" />
           <select
             name="task-filtre"
             id="task-filtre"
@@ -248,9 +281,23 @@ export default function TasksPage() {
               </option>
             ))}
           </select>
-        </div>
-        {/*Filtre des tâches par statuts */}
-        <div>
+
+          <label htmlFor="task-period-filtre" />
+          <select
+            name="task-period-filtre"
+            id="task-period-filtre"
+            value={filterPeriod}
+            onChange={handleChange}
+            className="font-sans bg-white border-2 border-orange-300 rounded-xl p-2 placeholder:text-orange-600 focus:outline-none"
+          >
+            <option value="">Toutes les périodes</option>
+            {Object.entries(periodLabels).map(([key, label]) => (
+              <option key={key} value={key.toLowerCase()}>
+                {label}
+              </option>
+            ))}
+          </select>
+
           {(() => {
             const statusLabels: Record<string, string> = {
               todo: "À faire",
@@ -262,13 +309,11 @@ export default function TasksPage() {
               new Set(tasks.map((t) => t.status))
             );
             return (
-              <div>
+              <>
                 <label
                   htmlFor="task-status-filtre"
                   className="block mb-2 text-orange-700 font-sans"
-                >
-                  Filtrer par statut :
-                </label>
+                />
                 <select
                   name="task-status-filtre"
                   value={filterStatus}
@@ -282,10 +327,11 @@ export default function TasksPage() {
                     </option>
                   ))}
                 </select>
-              </div>
+              </>
             );
           })()}
         </div>
+        {/*Filtre des tâches par statuts */}
       </div>
 
       {/* Liste des tâches ou message si aucune */}
@@ -297,7 +343,8 @@ export default function TasksPage() {
               : t.categoryId;
           const catMatch = !filterCategory || catId === filterCategory;
           const statusMatch = !filterStatus || t.status === filterStatus;
-          return catMatch && statusMatch;
+          const periodMatch = !filterPeriod || (t.period && t.period.toLowerCase() === filterPeriod);
+          return catMatch && statusMatch && periodMatch;
         });
         return filteredTasks.length === 0 ? (
           <div className="flex flex-col items-center font-sans text-orange-600 my-8">

@@ -6,7 +6,7 @@ export const statusLabels: Record<string, string> = {
 };
 
 export const categoryLabels: Record<string, { label: string; icon: string }> = {
-  work: { label: "Travail", icon: "💼" },
+  work: { label: "Travail", icon: "🖥️" },
   personal: { label: "Personnel", icon: "🏠" },
   shopping: { label: "Shopping", icon: "🛒" },
   health: { label: "Santé", icon: "❤️" },

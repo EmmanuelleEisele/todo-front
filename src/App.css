@@ -1,2 +1,10 @@
 @import "tailwindcss/theme" theme(reference);
 @import "tailwindcss/utilities";
+@import "tailwindcss/appearance";
+@import "tailwindcss/base";
+
+.animate-spin {
+    @media (hover: hover) {
+      animation: var(--animate-spin, spin 4.5s linear infinite) /* spin 4.5s linear infinite */;
+    }
+}
