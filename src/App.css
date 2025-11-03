@@ -1,7 +1,5 @@
 @import "tailwindcss/theme" theme(reference);
 @import "tailwindcss/utilities";
-@import "tailwindcss/appearance";
-@import "tailwindcss/base";
 
 .animate-spin {
     @media (hover: hover) {

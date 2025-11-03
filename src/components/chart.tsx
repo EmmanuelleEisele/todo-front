@@ -10,9 +10,13 @@ import {
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import {
+  fetchTasksByDay,
+  fetchTasksByWeek,
+  fetchTasksByMonth,
+  fetchTasksByYear,
+} from "../types/statsApi";
 
-// Enregistrer les composants Chart.js nécessaires
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -23,223 +27,180 @@ ChartJS.register(
   Legend
 );
 
-// Types
+
 type Period = "Day" | "Week" | "Month" | "Year";
 
-interface ChartProps {
-  defaultPeriod?: Period;
+interface DayStat {
+  _id: { year: number; month: number; day: number };
+  count: number;
 }
-
-interface StatsId {
-  day?: number;
-  week?: number;
-  month?: number;
-  year: number;
+interface WeekStat {
+  _id: { year: number; week: number };
+  count: number;
 }
-
-interface StatsItem {
-  _id: StatsId;
+interface MonthStat {
+  _id: { year: number; month: number };
+  count: number;
+}
+interface YearStat {
+  _id: { year: number };
   count: number;
 }
 
-interface StatsResponse {
-  stats: StatsItem[];
+const monthNames = [
+  "Jan",
+  "Fév",
+  "Mars",
+  "Avr",
+  "Mai",
+  "Juin",
+  "Juil",
+  "Août",
+  "Sept",
+  "Oct",
+  "Nov",
+  "Déc",
+];
+
+function getDateRange(start: Date, end: Date) {
+  const dates = [];
+  const current = new Date(start);
+  while (current <= end) {
+    dates.push(new Date(current));
+    current.setDate(current.getDate() + 1);
+  }
+  return dates;
 }
 
-// Composant principal
-export default function ChartComponent({
-  defaultPeriod = "Month",
-}: ChartProps) {
-  // États
-  const [period, setPeriod] = useState<Period>(defaultPeriod);
-  const [chartData, setChartData] = useState<{
-    labels: string[];
-    datasets: Array<{
-      label: string;
-      data: number[];
-      fill: boolean;
-      borderColor: string;
-      backgroundColor: string;
-      tension: number;
-      pointRadius: number;
-      pointBackgroundColor: string;
-      pointBorderColor: string;
-      pointBorderWidth: number;
-    }>;
-  } | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // Fonction pour formater les labels selon la période
-  const formatLabel = (id: StatsId, period: Period): string => {
-    switch (period) {
-      case "Day": {
-        // Format: "Lundi 22/10" ou "22/10/2025"
-        const dateDay = new Date(id.year || 2025, (id.month || 1) - 1, id.day || 1);
-        const dayName = dateDay.toLocaleDateString("fr-FR", { weekday: "short" });
-        return `${dayName} ${id.day}/${id.month}`;
-      }
-      case "Week": {
-        // Format: "Semaine 43"
-        return `Sem ${id.week}`;
-      }
-      case "Month": {
-        // Format: "Oct 2025"
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        return `${monthNames[(id.month || 1) - 1]} ${id.year}`;
-      }
-      case "Year": {
-        // Format: "2025"
-        return `${id.year}`;
-      }
-      default:
-        return "N/A";
-    }
+export default function ChartComponent() {
+  const [period, setPeriod] = useState<Period>("Day");
+  const [stats, setStats] = useState<DayStat[] | WeekStat[] | MonthStat[] | YearStat[]>([]);
+
+  useEffect(() => {
+    if (period === "Day") fetchTasksByDay().then((data) => setStats(data as DayStat[]));
+    else if (period === "Week") fetchTasksByWeek().then((data) => setStats(data as WeekStat[]));
+    else if (period === "Month") fetchTasksByMonth().then((data) => setStats(data as MonthStat[]));
+    else if (period === "Year") fetchTasksByYear().then((data) => setStats(data as YearStat[]));
+  }, [period]);
+
+  if (stats.length === 0) return <div>Aucune donnée</div>;
+
+  let labels: string[] = [];
+  let data: number[] = [];
+
+  if (period === "Day") {
+    const dayStats = stats as DayStat[];
+    const allDates = getDateRange(
+      new Date(dayStats[0]._id.year, dayStats[0]._id.month - 1, dayStats[0]._id.day),
+      new Date(
+        dayStats[dayStats.length - 1]._id.year,
+        dayStats[dayStats.length - 1]._id.month - 1,
+        dayStats[dayStats.length - 1]._id.day
+      )
+    );
+    labels = allDates.map(
+      (d) => `${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()}`
+    );
+    data = allDates.map((d) => {
+      const found = dayStats.find(
+        (s) =>
+          s._id.year === d.getFullYear() &&
+          s._id.month === d.getMonth() + 1 &&
+          s._id.day === d.getDate()
+      );
+      return found ? found.count : 0;
+    });
+  } else if (period === "Week") {
+    const weekStats = stats as WeekStat[];
+    labels = weekStats.map((s) => `S${s._id.week} ${s._id.year}`);
+    data = weekStats.map((s) => s.count);
+  } else if (period === "Month") {
+    const monthStats = stats as MonthStat[];
+    labels = monthStats.map(
+      (s) => `${monthNames[(s._id.month || 1) - 1]} ${s._id.year}`
+    );
+    data = monthStats.map((s) => s.count);
+  } else if (period === "Year") {
+    const yearStats = stats as YearStat[];
+    labels = yearStats.map((s) => `${s._id.year}`);
+    data = yearStats.map((s) => s.count);
+  }
+
+  const chartData: import('chart.js').ChartData<'line'> = {
+    labels,
+    datasets: [
+      {
+        label: "Tâches terminées ces 30 derniers jours",
+        data,
+        borderColor: "#ea580c", // couleur de la ligne (orange)
+        backgroundColor: "rgba(234, 88, 12, 0.15)", // couleur sous la ligne
+        pointBackgroundColor: "#ea580c", // couleur des points
+        pointRadius: 5,
+        fill: true ,
+        tension: 0.3,
+      },
+    ],
   };
 
-  // Charger les statistiques depuis l'API
-  useEffect(() => {
-    const loadStats = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        // Appeler l'API avec la période sélectionnée
-        const stats = await axios.get(`/stats?period=${period}`);
-
-        // Vérifier la structure de la réponse
-        if (stats && typeof stats === "object" && "stats" in stats) {
-          const statsData = (stats as StatsResponse).stats;
-
-          // Extraire les labels et les données
-          const labels = statsData.map((item) => formatLabel(item._id, period));
-          const data = statsData.map((item) => item.count); // Nombre de tâches accomplies
-
-          // Créer l'objet pour Chart.js
-          setChartData({
-            labels,
-            datasets: [
-              {
-                label: "Tâches accomplies",
-                data: data,
-                fill: true,
-                borderColor: "#ea580c",
-                backgroundColor: "rgba(234, 88, 12, 0.1)",
-                tension: 0.4,
-                pointRadius: 6,
-                pointBackgroundColor: "#ea580c",
-                pointBorderColor: "#fff",
-                pointBorderWidth: 2,
-              },
-            ],
-          });
-        }
-      } catch (err) {
-        console.error("Erreur lors du chargement des stats:", err);
-        setError("Erreur lors de la récupération des statistiques");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadStats();
-  }, [period]); // Recharger quand la période change
-
-  // Gérer le changement de période
-  const handlePeriodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    setPeriod(value as Period);
+  const options: import('chart.js').ChartOptions<'line'> = {
+    animations: {
+      tension: {
+        duration: 2000,
+        easing: 'linear',
+        from: 0.1,
+        to: 0.5,
+        loop: true,
+      },
+    },
+    plugins: {
+      legend: {
+        labels: {
+          color: '#ea580c',
+          font: { weight: 700, size: 12 },
+          boxWidth: 12,
+          padding: 10,
+        },
+      },
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: '#ea580c',
+          font: { weight: 700, size: 11 },
+        },
+        grid: { color: 'rgba(234, 88, 12, 0.2)' },
+      },
+      y: {
+        min: 0,
+        max: Math.max(...data) + 1,
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1,
+          color: '#ea580c',
+          font: { size: 12 },
+          callback: function (tickvalue: string | number) {
+            return Number.isInteger(tickvalue) ? tickvalue : null;
+          },
+        },
+        grid: { color: 'rgba(234, 88, 12, 0.2)' },
+      },
+    },
   };
 
   return (
-    <div className="bg-white border-2 border-orange-300 rounded-2xl p-6 max-w-5xl mx-auto">
-      <h2 className="text-2xl font-bold text-orange-700 mb-4">
-        Évolution des tâches accomplies
-      </h2>
-
-      {/* Sélecteur de période */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-orange-700 mb-2">
-          Afficher par :
-        </label>
-        <select
-          value={period}
-          onChange={handlePeriodChange}
-          className="border border-orange-400 bg-orange-50 rounded-lg p-2 focus:border-orange-700 focus:outline-none text-orange-700 font-medium"
-        >
-          <option value="Day">Par jour</option>
-          <option value="Week">Par semaine</option>
-          <option value="Month">Par mois</option>
-          <option value="Year">Par année</option>
-        </select>
-      </div>
-
-      {/* État de chargement */}
-      {loading && (
-        <div className="flex items-center justify-center h-64 bg-orange-50 rounded-lg">
-          <p className="text-orange-600 font-semibold">Chargement des statistiques...</p>
-        </div>
-      )}
-
-      {/* Message d'erreur */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
-          {error}
-        </div>
-      )}
-
-      {/* Graphique */}
-      {chartData && !loading && (
-        <div className="h-80 bg-gradient-to-b from-orange-50 to-white rounded-lg p-4">
-          <Line
-            data={chartData}
-            options={{
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: {
-                  display: true,
-                  labels: {
-                    color: "#ea580c",
-                    font: {
-                      size: 14,
-                      weight: "bold",
-                    },
-                    usePointStyle: true,
-                  },
-                },
-              },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  ticks: {
-                    color: "#ea580c",
-                    font: { weight: "bold" },
-                  },
-                  grid: {
-                    color: "rgba(234, 88, 12, 0.1)",
-                  },
-                },
-                x: {
-                  ticks: {
-                    color: "#ea580c",
-                    font: { weight: "bold" },
-                  },
-                  grid: {
-                    color: "rgba(234, 88, 12, 0.1)",
-                  },
-                },
-              },
-            }}
-          />
-        </div>
-      )}
-
-      {/* Aucune donnée */}
-      {!chartData && !loading && !error && (
-        <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
-          <p className="text-orange-700 font-semibold">Aucune donnée disponible pour le moment</p>
-        </div>
-      )}
+    <div className="max-w-4xl mx-auto">
+      <select
+        value={period}
+        onChange={(e) => setPeriod(e.target.value as Period)}
+        className="bg-white border-2 p-2 border-orange-300 rounded-lg font-sans mb-3 "
+      >
+        <option value="Day" aria-label="Jour">Jour</option>
+        <option value="Week" aria-label="Semaine">Semaine</option>
+        <option value="Month" aria-label="Mois">Mois</option>
+        <option value="Year" aria-label="Année">Année</option>
+      </select>
+      <Line className="bg-white rounded-lg sm:rounded-2xl p-0.5 sm:p-4 overflow-scroll" data={chartData} options={options} />
     </div>
   );
 }

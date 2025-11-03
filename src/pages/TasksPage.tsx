@@ -33,27 +33,11 @@ export default function TasksPage() {
     return response.data.data; // tableau de tâches
   }
 
-  async function deleteTask(id: string) {
-    try {
-      await apiClient.delete(`/tasks/${id}`);
-      // Réinitialiser les tâches après suppression
-      const tasks = await getAllTasks();
-      setTasks(tasks);
-    } catch (error) {
-      console.error("Erreur lors de la suppression de la tâche :", error);
-      alert("Erreur lors de la suppression de la tâche");
-    }
-  }
-  useEffect(() => {
-    getAllTasks().then(setTasks);
-    // Récupère les catégories dynamiquement
+  // Fonction pour charger les catégories
+  function fetchCategories() {
     apiClient
       .get("/categories/")
       .then((res) => {
-        console.log(
-          "Réponse brute catégories backend:",
-          res.data.data || res.data
-        );
         const cats = (res.data.data || res.data).map(
           (cat: { _id: string; name: string }) => {
             const fusion = {
@@ -62,14 +46,44 @@ export default function TasksPage() {
               label: categoryLabels[cat.name]?.label || cat.name,
               icon: categoryLabels[cat.name]?.icon || "❓",
             };
-            console.log("Fusion catégorie:", fusion);
             return fusion;
           }
         );
         setCategories(cats);
-        console.log("Liste finale des catégories:", cats);
       })
       .catch(() => setCategories([]));
+  }
+
+  async function deleteTask(id: string) {
+    try {
+      await apiClient.delete(`/tasks/${id}`);
+      // Réinitialiser les tâches après suppression
+      const tasks = await getAllTasks();
+      setTasks(tasks);
+      // Réinitialiser les catégories après suppression
+      fetchCategories();
+    } catch (error) {
+      console.error("Erreur lors de la suppression de la tâche :", error);
+      alert("Erreur lors de la suppression de la tâche");
+    }
+  }
+  async function archiveTask(id: string) {
+    try {
+      await apiClient.post(`/tasks/${id}/archive`, { isArchived: true });
+      // Réinitialiser les tâches après archivage
+      const tasks = await getAllTasks();
+      setTasks(tasks);
+      // Réinitialiser les catégories après archivage
+      fetchCategories();
+    } catch (error) {
+      console.error("Erreur lors de l'archivage de la tâche :", error);
+      alert("Erreur lors de l'archivage de la tâche");
+    }
+  }
+
+  useEffect(() => {
+    getAllTasks().then(setTasks);
+    fetchCategories();
   }, []);
 
   function handleChange(
@@ -94,23 +108,26 @@ export default function TasksPage() {
       return;
     }
     try {
-    // Fusionner date + heure en deadline ISO
-    let deadline = undefined;
-    if (formData.deadlineDate) {
-      if (formData.deadlineTime) {
-        deadline = new Date(
-          `${formData.deadlineDate}T${formData.deadlineTime}`
-        ).toISOString();
-      } else {
-        deadline = new Date(`${formData.deadlineDate}T23:59`).toISOString();
+      // Fusionner date + heure en deadline ISO
+      let deadline = undefined;
+      if (formData.deadlineDate) {
+        if (formData.deadlineTime) {
+          deadline = new Date(
+            `${formData.deadlineDate}T${formData.deadlineTime}`
+          ).toISOString();
+        } else {
+          deadline = new Date(`${formData.deadlineDate}T23:59`).toISOString();
+        }
       }
-    }
-    // On retire deadlineDate et deadlineTime du payload envoyé à l'API
-    const restFormData = { ...(formData as Record<string, any>) };
-    delete restFormData.deadlineDate;
-    delete restFormData.deadlineTime;
+      // On retire deadlineDate et deadlineTime du payload envoyé à l'API
+      const restFormData = { ...(formData as Record<string, any>) };
+      delete restFormData.deadlineDate;
+      delete restFormData.deadlineTime;
 
-    const response = await apiClient.post("/tasks", { ...restFormData, deadline });
+      const response = await apiClient.post("/tasks", {
+        ...restFormData,
+        deadline,
+      });
       console.log("Réponse de la création de tâche :", response.data);
       setFormData({});
       const tasks = await getAllTasks();
@@ -247,7 +264,7 @@ export default function TasksPage() {
           required
         />
         <div className="text-xs text-right text-gray-500">
-          {(formData.title ? formData.title.length : 0)} / 100 caractères
+          {formData.title ? formData.title.length : 0} / 100 caractères
           <Button
             type="submit"
             className="flex gap-2 items-center justify-center w-fit"
@@ -304,12 +321,14 @@ export default function TasksPage() {
               done: "Validée",
               cancelled: "Annulée",
               overdue: "En retard",
+              archived: "Archivée",
             };
             const uniqueStatus = Array.from(
               new Set(tasks.map((t) => t.status))
             );
             return (
               <>
+                {/*Filtre des tâches par statuts */}
                 <label
                   htmlFor="task-status-filtre"
                   className="block mb-2 text-orange-700 font-sans"
@@ -331,7 +350,6 @@ export default function TasksPage() {
             );
           })()}
         </div>
-        {/*Filtre des tâches par statuts */}
       </div>
 
       {/* Liste des tâches ou message si aucune */}
@@ -343,8 +361,15 @@ export default function TasksPage() {
               : t.categoryId;
           const catMatch = !filterCategory || catId === filterCategory;
           const statusMatch = !filterStatus || t.status === filterStatus;
-          const periodMatch = !filterPeriod || (t.period && t.period.toLowerCase() === filterPeriod);
-          return catMatch && statusMatch && periodMatch;
+          const periodMatch =
+            !filterPeriod ||
+            (t.period && t.period.toLowerCase() === filterPeriod);
+          // Afficher les tâches archivées seulement si le filtre status est "archived"
+          if (filterStatus === "archived") {
+            return catMatch && periodMatch && t.isArchived;
+          } else {
+            return catMatch && statusMatch && periodMatch && !t.isArchived;
+          }
         });
         return filteredTasks.length === 0 ? (
           <div className="flex flex-col items-center font-sans text-orange-600 my-8">
@@ -357,6 +382,7 @@ export default function TasksPage() {
               categories={categories}
               onToggle={toggleTaskCompletion}
               onDelete={deleteTask}
+              onArchive={archiveTask}
             />
           </ul>
         );

@@ -64,8 +64,9 @@ export interface Task {
   description?: string;
   priority: "low" | "medium" | "high";
   period: "day" | "week" | "month" | "year";
-  status: "todo" | "done" | "cancelled" | "overdue";
+  status: "todo" | "done" | "cancelled" | "overdue" | "archived";
   isDone: boolean;
+  isArchived: boolean;
   categoryId: string;
   deadline?: string;
   createdAt: string;
@@ -74,13 +75,13 @@ export interface Task {
 export interface CreateTask {
   title: string;
   description?: string;
-  status: "todo" | "done" | "cancelled" | "overdue";
+  status: "todo" | "done" | "cancelled" | "overdue" | "archived";
   deadline?: string;
 }
 export interface UpdateTask {
   title?: string;
   description?: string;
-  status?: "todo" | "done" | "cancelled" | "overdue";
+  status?: "todo" | "done" | "cancelled" | "overdue" | "archived";
   deadline?: string;
 }
 export interface DeleteTask {

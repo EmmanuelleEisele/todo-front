@@ -88,9 +88,9 @@ export default function Dashboard({ user }: { user?: User | null }) {
             <p className="text-orange-700">Tâches complétées</p>
           </div>
           <div className="w-auto sm:w-1/4 bg-white border-2 border-orange-300 rounded-2xl p-6 flex flex-col items-center sm:items-start gap-2 sm:gap-6">
-            <h1 className="flex gap-2 text-orange-800 font-bold"><TrendingUp size={18} />Taux</h1>
-            <p className="text-2xl font-bold text-orange-700">75%</p>
-            <p className="text-orange-700">de réalisation</p>
+            <h1 className="flex gap-2 text-orange-800 font-bold"><TrendingUp size={18} />Archivées</h1>
+            <p className="text-2xl font-bold text-orange-700">{tasks.filter(t => t.status === 'archived').length}</p>
+            <p className="text-orange-700">Tâches archivées</p>
           </div>
         </section>
         <section id="stats" className="mt-8 font-sans">

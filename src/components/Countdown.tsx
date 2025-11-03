@@ -28,6 +28,6 @@ export default function Countdown({ deadline }: { deadline: string }) {
   }, [deadline]);
 
   return timeLeft ? (
-    <div className="text-[0.875rem] font-semibold text-red-600 border-2 border-red-600 rounded-2xl py-1 px-2 bg-red-100 font-sans mb-1"><Clock size={14} /> {timeLeft}</div>
+    <div className="text-[0.875rem] w-fit font-semibold text-red-600 border-2 border-red-600 rounded-2xl py-1 px-2 bg-red-100 font-sans mb-1"><Clock size={14} /> {timeLeft}</div>
   ) : null;
 }
