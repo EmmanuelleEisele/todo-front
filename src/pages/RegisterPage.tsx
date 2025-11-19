@@ -40,10 +40,8 @@ export default function RegisterPage({ onLogin }: RegisterPageProps) {
     }
 
     try {
-      const response = await axios.post("/register", { pseudo, email, password });
-      // Stocker le pseudo localement puisque l'API ne le retourne pas au login
+      const response = await axios.post("/auth/register", { pseudo, email, password });
       localStorage.setItem('userPseudo', pseudo);
-      // Appelle la prop onLogin pour mettre à jour l'état d'App.tsx
       onLogin(response.data.user, response.data.token, response.data.refreshToken);
       navigate("/dashboard");
 
