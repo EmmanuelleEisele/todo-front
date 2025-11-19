@@ -131,7 +131,7 @@ export default function ChartComponent() {
     labels,
     datasets: [
       {
-        label: "Tâches terminées ces 30 derniers jours",
+        label: "Tâches terminées",
         data,
         borderColor: "#ea580c", // couleur de la ligne (orange)
         backgroundColor: "rgba(234, 88, 12, 0.15)", // couleur sous la ligne

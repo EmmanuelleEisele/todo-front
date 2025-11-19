@@ -16,6 +16,7 @@ import { Bubbles, Flame, PlusIcon } from "lucide-react";
 type FormTask = Partial<Task> & {
   deadlineDate?: string;
   deadlineTime?: string;
+  categoryId?: string;
 };
 
 export default function TasksPage() {
@@ -120,7 +121,7 @@ export default function TasksPage() {
         }
       }
       // On retire deadlineDate et deadlineTime du payload envoyé à l'API
-      const restFormData = { ...(formData as Record<string, any>) };
+      const restFormData = { ...(formData) };
       delete restFormData.deadlineDate;
       delete restFormData.deadlineTime;
 
@@ -356,8 +357,8 @@ export default function TasksPage() {
       {(() => {
         const filteredTasks = tasks.filter((t) => {
           const catId =
-            typeof t.categoryId === "object" && t.categoryId !== null
-              ? (t.categoryId as any)._id
+            typeof t.categoryId === "object" && t.categoryId !== null && "_id" in t.categoryId
+              ? (t.categoryId as { _id: string })._id
               : t.categoryId;
           const catMatch = !filterCategory || catId === filterCategory;
           const statusMatch = !filterStatus || t.status === filterStatus;

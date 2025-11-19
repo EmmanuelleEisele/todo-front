@@ -36,6 +36,11 @@ export default function NavBar({  isAuthenticated, onLogout }: NavBarProps) {
         <div className="hidden sm:flex items-center gap-3 pr-6">
           {isAuthenticated ? (
             <>
+            <Link to="/tasks">
+            <Button>
+              Mes tâches
+              </Button>
+            </Link>
             <Link to="/dashboard">
               <Button
                 variant="ghost"
