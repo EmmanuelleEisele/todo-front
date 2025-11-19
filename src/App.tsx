@@ -10,6 +10,7 @@ import TasksPage from "./pages/TasksPage";
 import Dashboard from "./pages/Dashboard";
 import { useState } from "react";
 import type { User } from "./types/todoApi";
+import Legal from "./pages/Legal";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -66,6 +67,7 @@ function App() {
           />
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="/dashboard" element={<Dashboard user={user} />} />
+          <Route path="/legal" element={<Legal />} />
           {/* <Route path="*" element={<NotFoundPage />} /> */}
         </Routes>
         <Footer />
