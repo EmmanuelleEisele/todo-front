@@ -40,7 +40,7 @@ export default function RegisterPage({ onLogin }: RegisterPageProps) {
     }
 
     try {
-      const response = await axios.post("/auth/register", { pseudo, email, password });
+      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/auth/register`, { pseudo, email, password });
       localStorage.setItem('userPseudo', pseudo);
       onLogin(response.data.user, response.data.token, response.data.refreshToken);
       navigate("/dashboard");

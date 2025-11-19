@@ -8,19 +8,33 @@ import NavBar from "./components/NavBar";
 import RegisterPage from "./pages/RegisterPage";
 import TasksPage from "./pages/TasksPage";
 import Dashboard from "./pages/Dashboard";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { checkTokenValid } from "./types/authApi";
 import type { User } from "./types/todoApi";
 import Legal from "./pages/Legal";
 import NotFoundPage from "./pages/NotFoundPage";
 
+
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    () => !!localStorage.getItem("authToken")
-  );
-  const [user, setUser] = useState(() => {
-    const userStr = localStorage.getItem("currentUser");
-    return userStr ? JSON.parse(userStr) : null;
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  // Vérifie la validité du token au chargement
+  useEffect(() => {
+    async function verify() {
+      const validUser = await checkTokenValid();
+      if (validUser) {
+        setIsAuthenticated(true);
+        setUser(validUser);
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("currentUser");
+      }
+    }
+    verify();
+  }, []);
 
   const handleLogin = (
     userData: User,
