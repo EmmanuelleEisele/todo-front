@@ -1,0 +1,393 @@
+import { useEffect, useState } from "react";
+import type { Task } from "../types/todoApi";
+
+import apiClient from "../types/todoApi";
+import CategorySelect from "../components/CategorySelect";
+import TaskList from "../components/TaskList";
+import {
+  categoryLabels,
+  priorityLabels,
+  periodLabels,
+} from "../constants/labels";
+import Button from "../components/ui/Button";
+import { Bubbles, Flame, PlusIcon } from "lucide-react";
+
+// Étend Task pour le formulaire avec deadlineDate et deadlineTime
+type FormTask = Partial<Task> & {
+  deadlineDate?: string;
+  deadlineTime?: string;
+  categoryId?: string;
+};
+
+export default function TasksPage() {
+  const [filterCategory, setFilterCategory] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterPeriod, setFilterPeriod] = useState<string>("");
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [formData, setFormData] = useState<FormTask>({});
+  const [categories, setCategories] = useState<
+    Array<{ _id: string; name: string; label: string; icon: string }>
+  >([]);
+
+  async function getAllTasks() {
+    const response = await apiClient.get("/tasks/");
+    return response.data.data; // tableau de tâches
+  }
+
+  // Fonction pour charger les catégories
+  function fetchCategories() {
+    apiClient
+      .get("/categories/")
+      .then((res) => {
+        const cats = (res.data.data || res.data).map(
+          (cat: { _id: string; name: string }) => {
+            const fusion = {
+              _id: cat._id,
+              name: cat.name,
+              label: categoryLabels[cat.name]?.label || cat.name,
+              icon: categoryLabels[cat.name]?.icon || "❓",
+            };
+            return fusion;
+          }
+        );
+        setCategories(cats);
+      })
+      .catch(() => setCategories([]));
+  }
+
+  async function deleteTask(id: string) {
+    try {
+      await apiClient.delete(`/tasks/${id}`);
+      // Réinitialiser les tâches après suppression
+      const tasks = await getAllTasks();
+      setTasks(tasks);
+      // Réinitialiser les catégories après suppression
+      fetchCategories();
+    } catch (error) {
+      console.error("Erreur lors de la suppression de la tâche :", error);
+      alert("Erreur lors de la suppression de la tâche");
+    }
+  }
+  async function archiveTask(id: string) {
+    try {
+      await apiClient.post(`/tasks/${id}/archive`, { isArchived: true });
+      // Réinitialiser les tâches après archivage
+      const tasks = await getAllTasks();
+      setTasks(tasks);
+      // Réinitialiser les catégories après archivage
+      fetchCategories();
+    } catch (error) {
+      console.error("Erreur lors de l'archivage de la tâche :", error);
+      alert("Erreur lors de l'archivage de la tâche");
+    }
+  }
+
+  useEffect(() => {
+    getAllTasks().then(setTasks);
+    fetchCategories();
+  }, []);
+
+  function handleChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) {
+    const { name, value } = e.target;
+    if (name === "task-filtre") {
+      setFilterCategory(value);
+    } else if (name === "task-period-filtre") {
+      setFilterPeriod(value);
+    } else {
+      setFormData((prev) => {
+        const newForm = { ...prev, [name]: value };
+        return newForm;
+      });
+    }
+  }
+  async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!formData.title || !formData.period || !formData.categoryId) {
+      alert("Le titre, la période et la catégorie sont obligatoires");
+      return;
+    }
+    try {
+      // Fusionner date + heure en deadline ISO
+      let deadline = undefined;
+      if (formData.deadlineDate) {
+        if (formData.deadlineTime) {
+          deadline = new Date(
+            `${formData.deadlineDate}T${formData.deadlineTime}`
+          ).toISOString();
+        } else {
+          deadline = new Date(`${formData.deadlineDate}T23:59`).toISOString();
+        }
+      }
+      // On retire deadlineDate et deadlineTime du payload envoyé à l'API
+      const restFormData = { ...(formData) };
+      delete restFormData.deadlineDate;
+      delete restFormData.deadlineTime;
+
+      const response = await apiClient.post("/tasks", {
+        ...restFormData,
+        deadline,
+      });
+      console.log("Réponse de la création de tâche :", response.data);
+      setFormData({});
+      const tasks = await getAllTasks();
+      setTasks(tasks);
+    } catch (error) {
+      const err = error as Record<string, unknown>;
+      const hasResponse =
+        typeof err.response === "object" && err.response !== null;
+
+      if (hasResponse) {
+        const responseData = (err.response as Record<string, unknown>).data;
+        const message =
+          typeof responseData === "object" && responseData !== null
+            ? (responseData as Record<string, unknown>).message ||
+              (responseData as Record<string, unknown>).error ||
+              "Erreur API"
+            : "Erreur API";
+        alert("Erreur API : " + message);
+      } else {
+        console.error("Erreur lors de la création de la tâche :", error);
+      }
+    }
+  }
+  async function toggleTaskCompletion(id: string) {
+    const task = tasks.find((task) => task._id === id);
+    if (!task) return;
+
+    try {
+      await apiClient.put(`/tasks/${id}`, {
+        isDone: !task.isDone,
+      });
+      // Recharge la liste complète pour synchroniser les catégories
+      const tasksUpdated = await getAllTasks();
+      setTasks(tasksUpdated);
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour de la tâche :", error);
+      alert("Erreur lors de la mise à jour de la tâche");
+    }
+  }
+  return (
+    <div>
+      <h1 className="text-3xl font-bold text-center text-orange-700 font-sans p-4 mt-8">
+        Mes Tâches
+      </h1>
+
+      {/* Formulaire de création de tâche */}
+      <form
+        id="task-form"
+        action="submit"
+        onSubmit={handleCreate}
+        className="grid grid-cols-1 max-w-3xl mx-2 sm:mx-auto gap-2 font-sans bg-white border-2 border-orange-300 rounded-2xl p-4 mb-8"
+      >
+        <div>
+          <h2 className="mb-4 text-orange-700 font-semibold">
+            Créer une nouvelle tâche
+          </h2>
+          <label htmlFor="task-categories">
+            <CategorySelect
+              name="categoryId"
+              categories={categories.map((cat) => ({
+                key: cat._id,
+                label: cat.label,
+                icon: cat.icon,
+              }))}
+              value={formData.categoryId || ""}
+              onChange={handleChange}
+              className="bg-white border-2 p-2 border-orange-300 rounded-lg font-sans mr-2 mb-2 md:mb-0"
+              required
+            />
+          </label>
+          <label htmlFor="task-period" />
+          <select
+            id="task-period"
+            name="period"
+            required
+            value={formData.period || ""}
+            onChange={handleChange}
+            className="bg-white border-2 p-2 border-orange-300 rounded-lg font-sans w-fit mr-2 mb-2 md:mb-0"
+          >
+            <option value="">Période *</option>
+            {Object.entries(periodLabels).map(([key, label]) => (
+              <option key={key} value={key.toLowerCase()}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <label htmlFor="task-deadline-date" />
+          <input
+            type="date"
+            id="task-deadline-date"
+            name="deadlineDate"
+            className="bg-white border-2 p-2 border-orange-300 rounded-lg font-sans w-fit mr-2 mb-2 md:mb-0"
+            onChange={handleChange}
+            value={formData.deadlineDate || ""}
+          />
+          <label htmlFor="task-deadline-time" />
+          <input
+            type="time"
+            id="task-deadline-time"
+            name="deadlineTime"
+            className="bg-white border-2 p-2 border-orange-300 rounded-lg font-sans w-fit mr-2 mb-2 md:mb-0"
+            onChange={handleChange}
+            value={formData.deadlineTime || ""}
+          />
+          <label htmlFor="priority" />
+          <select
+            id="priority"
+            name="priority"
+            required
+            value={formData.priority}
+            onChange={handleChange}
+            className="bg-white border-2 border-orange-300 rounded-xl p-2 focus:outline-none w-fit"
+          >
+            <option value="">Priorité *</option>
+            {["low", "medium", "high"].map((level) => (
+              <option key={level} value={level}>
+                {priorityLabels[level]}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <label htmlFor="task-title" />
+
+        <input
+          type="text"
+          id="task-title"
+          name="title"
+          onChange={handleChange}
+          value={formData.title || ""}
+          maxLength={100}
+          className=" bg-white border-2 border-orange-300 rounded-xl p-2 placeholder:text-orange-600 focus:outline-none"
+          placeholder="* Ajouter le titre de votre tâche avant la fin du monde..."
+          required
+        />
+        <div className="text-xs text-right text-gray-500">
+          {formData.title ? formData.title.length : 0} / 100 caractères
+          <Button
+            type="submit"
+            className="flex gap-2 items-center justify-center w-fit"
+          >
+            <PlusIcon size={15} /> Ajouter
+          </Button>
+        </div>
+        <span className="text-orange-800 text-[0.7rem]">
+          * Ces champs sont obligatoires
+        </span>
+      </form>
+      {/*Filtres des tâches */}
+      <div className="max-w-[calc(100%-1rem)] sm:max-w-fit mx-2 sm:mx-auto mb-6 bg-orange-100 border-2 border-orange-200 hover:border-orange-300 rounded-lg p-2">
+        <h2 className="block ml-1 mb-2 text-orange-800 font-sans w-fit font-semibold ">
+          <Bubbles size={15} className="animate-spin" /> Filtres
+        </h2>
+        {/* Filtre des tâches par catégories */}
+        <div className="flex flex-col mx-2 sm:flex-row gap-2">
+          <label htmlFor="task-filtre" />
+          <select
+            name="task-filtre"
+            id="task-filtre"
+            value={filterCategory}
+            onChange={handleChange}
+            className="font-sans bg-white border-2 border-orange-300 rounded-xl p-2 placeholder:text-orange-600 focus:outline-none"
+          >
+            <option value="">Toutes les catégories</option>
+            {categories.map((cat) => (
+              <option key={cat._id} value={cat._id}>
+                {cat.icon} {cat.label}
+              </option>
+            ))}
+          </select>
+
+          <label htmlFor="task-period-filtre" />
+          <select
+            name="task-period-filtre"
+            id="task-period-filtre"
+            value={filterPeriod}
+            onChange={handleChange}
+            className="font-sans bg-white border-2 border-orange-300 rounded-xl p-2 placeholder:text-orange-600 focus:outline-none"
+          >
+            <option value="">Toutes les périodes</option>
+            {Object.entries(periodLabels).map(([key, label]) => (
+              <option key={key} value={key.toLowerCase()}>
+                {label}
+              </option>
+            ))}
+          </select>
+
+          {(() => {
+            const statusLabels: Record<string, string> = {
+              todo: "À faire",
+              done: "Validée",
+              cancelled: "Annulée",
+              overdue: "En retard",
+              archived: "Archivée",
+            };
+            const uniqueStatus = Array.from(
+              new Set(tasks.map((t) => t.status))
+            );
+            return (
+              <>
+                {/*Filtre des tâches par statuts */}
+                <label
+                  htmlFor="task-status-filtre"
+                  className="block mb-2 text-orange-700 font-sans"
+                />
+                <select
+                  name="task-status-filtre"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="font-sans bg-white border-2 border-orange-300 rounded-xl p-2 placeholder:text-orange-600 focus:outline-none"
+                >
+                  <option value="">Tous les statuts</option>
+                  {uniqueStatus.map((status) => (
+                    <option key={status} value={status}>
+                      {statusLabels[status] || status}
+                    </option>
+                  ))}
+                </select>
+              </>
+            );
+          })()}
+        </div>
+      </div>
+
+      {/* Liste des tâches ou message si aucune */}
+      {(() => {
+        const filteredTasks = tasks.filter((t) => {
+          const catId =
+            typeof t.categoryId === "object" && t.categoryId !== null && "_id" in t.categoryId
+              ? (t.categoryId as { _id: string })._id
+              : t.categoryId;
+          const catMatch = !filterCategory || catId === filterCategory;
+          const statusMatch = !filterStatus || t.status === filterStatus;
+          const periodMatch =
+            !filterPeriod ||
+            (t.period && t.period.toLowerCase() === filterPeriod);
+          // Afficher les tâches archivées seulement si le filtre status est "archived"
+          if (filterStatus === "archived") {
+            return catMatch && periodMatch && t.isArchived;
+          } else {
+            return catMatch && statusMatch && periodMatch && !t.isArchived;
+          }
+        });
+        return filteredTasks.length === 0 ? (
+          <div className="flex flex-col items-center font-sans text-orange-600 my-8">
+            <Flame size={30} /> Aucune tâche. Profitez de la fin du monde ! 🎉
+          </div>
+        ) : (
+          <ul className="mx-auto max-w-2xl font-sans">
+            <TaskList
+              tasks={filteredTasks}
+              categories={categories}
+              onToggle={toggleTaskCompletion}
+              onDelete={deleteTask}
+              onArchive={archiveTask}
+            />
+          </ul>
+        );
+      })()}
+    </div>
+  );
+}
