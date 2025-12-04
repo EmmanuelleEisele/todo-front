@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://todo-api-2ij6.onrender.com/sitemap.xml
