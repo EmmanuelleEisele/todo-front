@@ -21,9 +21,9 @@ function App() {
   const [user, setUser] = useState<User | null>(null);
   const location = useLocation();
 
-  // Vérifie la validité du token au chargement, sauf sur /login
+  // Vérifie la validité du token au chargement, sauf sur /login et /
   useEffect(() => {
-    if (location.pathname === "/login") return;
+    if (location.pathname === "/login" || location.pathname === "/") return;
     async function verify() {
       const validUser = await checkTokenValid();
       if (validUser) {
