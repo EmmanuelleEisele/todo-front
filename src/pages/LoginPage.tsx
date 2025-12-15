@@ -31,7 +31,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       // Appelle la prop onLogin pour mettre à jour l'état d'App.tsx
       onLogin(response.data.user, response.data.token, response.data.refreshToken);
       // Redirection vers la page d'accueil après connexion réussie
-      navigate("/dashboard");
+      navigate("/tasks");
     } catch (error: unknown) {
       let errorMessage = "Email ou mot de passe incorrect";
 
