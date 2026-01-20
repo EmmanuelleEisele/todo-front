@@ -81,11 +81,11 @@ export default function TaskList({
                 </p>
                 {task.priority === "high" ? (
                   <span className="ml-2 text-red-600 font-bold" title="Priorité Haute ">
-                    <Flame size={20} className="text-red-800 stroke-3"/>
+                    <Flame size={20} className="text-red-600 stroke-3"/>
                   </span>
                 ) : task.priority === "medium" ? (
                   <span className="ml-2 text-yellow-600 font-bold" title="Priorité moyenne">
-                    <Flame size={20} className="text-yellow-600 stroke-3"/>
+                    <Flame size={20} className="text-orange-600 stroke-3"/>
                   </span>
                 ) : task.priority === "low" ? (
                   <span className="ml-2 text-green-600 font-bold" title="Priorité Basse">
