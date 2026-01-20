@@ -244,9 +244,18 @@ export default function TasksPage() {
           >
             <option value="">Priorité *</option>
             {["low", "medium", "high"].map((level) => (
-              <option key={level} value={level}>
+                <option key={level} value={level}>
+                <Flame
+                  className={
+                  level === "high"
+                    ? "text-red-600"
+                    : level === "medium"
+                    ? "text-orange-600"
+                    : "text-green-600"
+                  }
+                />{" "}
                 {priorityLabels[level]}
-              </option>
+                </option>
             ))}
           </select>
         </div>
