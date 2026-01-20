@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Flame } from "lucide-react";
+import { Flame, RotateCw } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import type { User } from "../types/todoApi";
 import  apiClient  from "../types/todoApi";
@@ -104,11 +104,11 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </div>
           <div className="flex flex-col items-center justify-center mb-4">
             <button
-              className="bg-orange-700 border-none hover:bg-orange-800 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className="bg-orange-700 border-none hover:bg-orange-800 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400 disabled:cursor-not-allowed "
               type="submit"
               disabled={loading}
             >
-              {loading ? (<p>Connexion...</p>) : (<p>Se connecter</p>)}
+              {loading ? (<p className="text-white">Connexion <span className="animate-spin"><RotateCw size={16} className="text-white" /></span></p>) : (<p>Se connecter</p>)}
             </button>
             <p className="text-orange-700 pt-2"> Pas encore de compte ? </p>
             <Link
