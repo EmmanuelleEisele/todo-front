@@ -108,7 +108,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               type="submit"
               disabled={loading}
             >
-              {loading ? "Connexion..." : "Se connecter"}
+              {loading ? (<p>Connexion...</p>) : (<p>Se connecter</p>)}
             </button>
             <p className="text-orange-700 pt-2"> Pas encore de compte ? </p>
             <Link
