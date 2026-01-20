@@ -242,19 +242,19 @@ export default function TasksPage() {
             onChange={handleChange}
             className="bg-white border-2 border-orange-300 rounded-xl p-2 focus:outline-none w-fit"
           >
-            <option value="">Priorité *</option>
+            <option value=""> <Flame />Priorité *</option>
             {["low", "medium", "high"].map((level) => (
                 <option key={level} value={level}>
-                <Flame
-                  className={
-                  level === "high"
-                    ? "text-red-600"
-                    : level === "medium"
-                    ? "text-orange-600"
-                    : "text-green-600"
-                  }
-                />{" "}
-                {priorityLabels[level]}
+                  <Flame
+                    className={
+                    level === "high"
+                      ? "text-red-600"
+                      : level === "medium"
+                      ? "text-orange-600"
+                      : "text-green-600"
+                    }
+                  />{" "}
+                  {priorityLabels[level]}
                 </option>
             ))}
           </select>
