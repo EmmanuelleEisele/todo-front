@@ -1,5 +1,5 @@
 import type { Task } from "../types/todoApi";
-import { Archive, Calendar, Clock, Flag, Trash } from "lucide-react";
+import { Archive, Calendar, Clock, Flame, Trash } from "lucide-react";
 import Countdown from "./Countdown";
 import MessageConfirmation from "./message";
 import { useState } from "react";
@@ -79,6 +79,19 @@ export default function TaskList({
                 <p className=" sm:mb-0 break-words whitespace-normal max-w-[calc(100%-3rem)] sm:max-w-md w-full">
                   {task.title}
                 </p>
+                {task.priority === "high" ? (
+                  <span className="ml-2 text-red-600 font-bold" title="Priorité Haute ">
+                    <Flame size={20} className="text-red-800 stroke-3"/>
+                  </span>
+                ) : task.priority === "medium" ? (
+                  <span className="ml-2 text-yellow-600 font-bold" title="Priorité moyenne">
+                    <Flame size={20} className="text-yellow-600 stroke-3"/>
+                  </span>
+                ) : task.priority === "low" ? (
+                  <span className="ml-2 text-green-600 font-bold" title="Priorité Basse">
+                    <Flame size={20} className="text-green-600 stroke-3"/>
+                  </span>
+                ) : null}
 
                 {task.isArchived ? (
                   <button
@@ -97,19 +110,6 @@ export default function TaskList({
                     <Archive size={20} />
                   </button>
                 )}
-                {task.priority === "high" ? (
-                  <span className="ml-2 text-red-600 font-bold" title="Priorité Haute ">
-                    <Flag size={16} className="text-red-800"/>
-                  </span>
-                ) : task.priority === "medium" ? (
-                  <span className="ml-2 text-yellow-600 font-bold" title="Priorité moyenne">
-                    <Flag size={16} className="text-yellow-800"/>
-                  </span>
-                ) : task.priority === "low" ? (
-                  <span className="ml-2 text-green-600 font-bold" title="Priorité Basse">
-                    <Flag size={16} className="text-green-800"/>
-                  </span>
-                ) : null}
               </section>
               <section className="flex flex-col sm:flex-row mt-2 ">
                 <div className="flex gap-1 text-left w-fit mr-2 text-[0.875rem] border-2 border-orange-300 rounded-xl p-1 px-2 bg-orange-100 mb-1">
