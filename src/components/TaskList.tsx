@@ -93,7 +93,7 @@ export default function TaskList({
                 <p className="sm:mb-0 break-words whitespace-normal max-w-[calc(100%-3rem)] sm:max-w-md w-full">
                   {task.title}
                 </p>
-                <div>
+                <div className="flex flex-col">
                 {task.isArchived ? (
                   <button
                     onClick={() => openConfirmation(task._id)}
