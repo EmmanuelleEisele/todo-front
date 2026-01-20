@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, RotateCw } from "lucide-react";
 import { Flame, Info } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import type { User } from "../types/todoApi";
@@ -228,7 +228,7 @@ export default function RegisterPage({ onLogin }: RegisterPageProps) {
               className="bg-orange-700 border-none w- hover:bg-orange-800 text-white font-bold py-2 px-4 rounded "
               type="submit"
             >
-              {loading ? "Création du compte..." : "Je m'inscris"}
+              {loading ?  (<p className="text-white">Création du compte<RotateCw size={16} className="text-white animate-spin" /></p>) : "Je m'inscris"}
             </button>
             <p className="text-orange-700 pt-4"> Vous avez déjà un compte ?</p>
             <Link
