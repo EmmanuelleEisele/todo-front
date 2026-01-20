@@ -108,7 +108,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               type="submit"
               disabled={loading}
             >
-              {loading ? (<p className="text-white">Connexion <span className="animate-spin"><RotateCw size={16} className="text-white" /></span></p>) : (<p>Se connecter</p>)}
+              {loading ? (<p className="text-white">Connexion<RotateCw size={16} className="text-white animate-spin" /></p>) : (<p>Se connecter</p>)}
             </button>
             <p className="text-orange-700 pt-2"> Pas encore de compte ? </p>
             <Link
