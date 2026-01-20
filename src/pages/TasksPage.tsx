@@ -179,7 +179,7 @@ export default function TasksPage() {
         id="task-form"
         action="submit"
         onSubmit={handleCreate}
-        className="grid grid-cols-1 max-w-3xl mx-2 sm:mx-auto gap-2 font-sans bg-white border-2 border-orange-300 rounded-2xl p-4 mb-8"
+        className="grid grid-cols-1 max-w-3xl mx-2 md:mx-auto gap-2 font-sans bg-white border-2 border-orange-300 rounded-2xl p-4 mb-8"
       >
         <div>
           <h2 className="mb-4 text-orange-700 font-semibold">
