@@ -75,10 +75,7 @@ export default function TaskList({
                   onChange={() => onToggle(task._id)}
                   className="mr-2 accent-orange-500 focus:ring-orange-500"
                   checked={task.isDone}
-                />
-                <p className=" sm:mb-0 break-words whitespace-normal max-w-[calc(100%-3rem)] sm:max-w-md w-full">
-                  {task.title}
-                </p>
+                />                
                 {task.priority === "high" ? (
                   <span className="ml-2 text-red-600 font-bold" title="Priorité Haute ">
                     <Flame size={20} className="text-red-600 stroke-3"/>
@@ -92,6 +89,10 @@ export default function TaskList({
                     <Flame size={20} className="text-green-600 stroke-3"/>
                   </span>
                 ) : null}
+
+                <p className=" sm:mb-0 break-words whitespace-normal max-w-[calc(100%-3rem)] sm:max-w-md w-full">
+                  {task.title}
+                </p>
 
                 {task.isArchived ? (
                   <button
