@@ -93,11 +93,11 @@ export default function TaskList({
                 <p className="sm:mb-0 break-words whitespace-normal max-w-[calc(100%-3rem)] sm:max-w-md w-full">
                   {task.title}
                 </p>
-                <div className="flex flex-col z-10">
+                <div className="flex flex-col">
                 {task.isArchived ? (
                   <button
                     onClick={() => openConfirmation(task._id)}
-                    className="bg-transparent rounded-sm p-2 border-none hover:bg-orange-200/50 text-orange-500"
+                    className="bg-transparent rounded-sm p-1 border-none hover:bg-orange-200/50 text-orange-500"
                     title="Supprimer la tâche"
                   >
                     <Trash size={20} />
@@ -105,20 +105,20 @@ export default function TaskList({
                 ) : (
                   <button
                     onClick={() => onArchive(task._id)}
-                    className="bg-transparent rounded-sm p-2 border-none hover:bg-orange-200/50 text-orange-500"
+                    className="bg-transparent rounded-sm p-1 border-none hover:bg-orange-200/50 text-orange-500"
                     title="Archiver la tâche"
                   >
                     <Archive size={20} />
                   </button>
                 )}
                 <button onClick={() => openConfirmation(task._id)} 
-                className="bg-transparent rounded-sm p-2 border-none hover:bg-orange-200/50 text-orange-500" 
+                className="bg-transparent rounded-sm p-1 border-none hover:bg-orange-200/50 text-orange-500" 
                 title="Supprimer la tâche">
                   <Trash size={20} />
                 </button>
                 </div>
               </section>
-              <section className="flex flex-col sm:flex-row mt-2 ">
+              <section className="w-fit flex flex-col sm:flex-row">
                 <div className="flex gap-1 text-left w-fit mr-2 text-[0.875rem] border-2 border-orange-300 rounded-xl p-1 px-2 bg-orange-100 mb-1">
                   <span>{cat.icon}</span>
                   <span>{cat.label}</span>
